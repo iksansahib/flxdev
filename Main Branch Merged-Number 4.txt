@@ -1,0 +1,149 @@
+
+
+
+
+Recent main branch merged (120-140 lines of code):
+Merged PR 1300
+
+lib/cubits/reward/settings/reward_settings_cubit.dart
+...
+      return result;
+    });
+  }
+
+  Future<bool> revokeClient(entity) async {
+    return await this.repository.revokeClient(entity);
+  }
+}
+...
+
+lib/localization/app_en.arb
+...
+   "@_PROFILE_PAGE": {
+   },
+   "profileDeleteAccount": "Are you sure you want to delete this account?",
+-  "profileDeleteBusiness": "Do you want to delete your business too?"
++  "profileDeleteBusiness": "Do you want to delete your business too?",
+ 
++  "@_REVOKE_CLIENT_INVITATION": {
++  },
++  "revokeInvitation": "Revoke Invitation",
++  "revokeInvitationConfirmation": "Are you sure want to revoke this selected client invitations?",
++  "revokeInvitationSuccess": "Revoke successful"
+ }
+\ No newline at end of file
+...
+
+lib/repositories/settings/reward/reward_settings_repository.dart
+...
+    });
+    return clientList;
+  }
+
+  Future<bool> revokeClient(queryParameters) async {
+    bool result = false;
+    await root.ajax
+        .post(root.apiRouteMapper['joinbonus_revoke']!, data: queryParameters)
+        .then((value) {
+      result = true;
+    });
+    return result;
+  }
+}
+...
+
+lib/screen/settings_admin/dialog/dialog_revoke_invitation.dart
+...
+class DialogRevokeInvitation extends StatefulWidget {
+  const DialogRevokeInvitation({Key? key}) : super(key: key);
+
+  @override
+  _DialogRevokeInvitationState createState() => _DialogRevokeInvitationState();
+}
+
+class _DialogRevokeInvitationState extends State<DialogRevokeInvitation> {
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      contentPadding:
+          EdgeInsets.only(top: 15.0, right: 20.0, bottom: 15.0, left: 20.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+      content: Container(
+        width: MediaQuery.of(context).size.width * 0.75,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.60,
+                    padding: EdgeInsets.only(left: 10.0),
+                    child: Text(AppLocalizations.of(context)!.revokeInvitation,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 3,
+                        textAlign: TextAlign.center,
+                        style: new TextStyle(
+                          color: ColorList().background9Color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: ResponsiveFlutter.of(context)
+                              .fontSize(root.RESPONSIVE_HEADER_FONT_SIZE),
+                        )),
+                  ),
+                ]),
+            SizedBox(height: 15),
+...            
+
+lib/screen/settings_admin/page/settings_clientlist_page.dart
+...
+    return Future.value(null);
+  }
+
+  void showRevokeInvitationDialog() {
+    showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return DialogRevokeInvitation();
+        }).then((confirmed) async {
+      if (confirmed) {
+        await revokeInvitation();
+      }
+    });
+  }
+
+  Future<void> revokeInvitation() async {
+    var data = {
+      "idList": getSelectedClientIds(),
+    };
+    await rewardSettingsCubit.revokeClient(data).then((success) {
+      if (success) {
+        initializeClientList();
+        ComponentSnackbar.showSnackbar(
+          AppLocalizations.of(context)!.revokeInvitationSuccess,
+          backgroundColor: Colors.green,
+        );
+      }
+    }).onError((DioError error, stackTrace) {
+      resetSelectedClient();
+    });
+
+    return Future.value(null);
+  }
+
+  void resetSelectedClient() {
+    setState(() {
+      _selectAll = false;
+...
+
+lib/static/api_map_list.dart
+...
+  "joinbonus_upload_csv": "/system/joinbonus/upload/csv",
+  "joinbonus_list": "/system/joinbonus/list",
+  "joinbonus_resend": "/system/joinbonus/resend",
+  "joinbonus_revoke": "/system/joinbonus/delete",
+  "set_highlight_mob": "/system/user/guideline",
+  "redemption_reward_check": "/system/reward/redemption/request/response/check",
+  "send_otp": "/system/twilio/verify/number",
+...
